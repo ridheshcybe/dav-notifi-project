@@ -88,31 +88,11 @@ def display_scheduled_tasks():
     for task in scheduled_tasks:
         print(f"{task['title']}: {time_remaining(task)} seconds remaining")
 
-
 def send_notification(title, message):
     system = platform.system()
-    if system == "Windows":
-        script = f'''
-        [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-        [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-        [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-
-        $template = @"
-        <toast>
-            <visual>
-                <binding template="ToastGeneric">
-                    <text>{title}</text>
-                    <text>{message}</text>
-                </binding>
-            </visual>
-        </toast>
-        "@
-
-        $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-        $xml.LoadXml($template)
-        $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
-        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Python Script").Show($toast)'''
-        subprocess.run(["powershell", "-Command", script], capture_output=True)
+    if system == "Windows": 
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, message, title, 1)
     elif system == "Darwin":
         subprocess.run(["osascript", "-e", f'display notification "{message}" with title "{title}"'])
     else:
