@@ -1,63 +1,37 @@
 import time
-import platform
-import subprocess
 import threading
 from datetime import datetime, timedelta
 
 scheduled_tasks = []
 scheduler_thread = None
-running = False
+running = True
 
 def schedule_reminder(title, message, timeout):
     task = {
-        "func": send_notification,
-        "args": (title, message),
-        "timeout_seconds": timeout,
-        "next_run": datetime.now() + timedelta(seconds=timeout),
         "title": title,
         "message": message,
+        "timeout_seconds": timeout,
+        "next_run": datetime.now() + timedelta(seconds=timeout),
         "active": True
     }
     scheduled_tasks.append(task)
     print(f"Reminder scheduled to send once in {timeout} seconds.")
-    
-    if not running:
-        start_scheduler()
-
 
 def start_scheduler():
-    global running, scheduler_thread
-    if running:
-        print("Scheduler is already running.")
-        return
+    global scheduler_thread
     print("Starting scheduler...")
-    running = True
     scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     scheduler_thread.start()
     print("Scheduler is now running.")
 
-
-def stop_scheduler():
-    global running
-    if not running:
-        print("Scheduler is not running.")
-    else:
-        print("Stopping scheduler...")
-        running = False
-        if scheduler_thread:
-            scheduler_thread.join()
-        print("Scheduler stopped.")
-
-
 def run_scheduler():
     global running
     while running:
-        for task in scheduled_tasks:
+        for task in list(scheduled_tasks):  # Create a copy of the list to safely modify during iteration
             if should_run(task):
                 run_task(task)
                 scheduled_tasks.remove(task)
         time.sleep(1)
-
 
 def should_run(task):
     current_time = datetime.now()
@@ -70,8 +44,8 @@ def should_run(task):
         return False
 
 def run_task(task):
-    send_notification(task["title"], task["message"])
-    task["next_run"] = datetime.now() + timedelta(seconds=task["timeout_seconds"])
+    print(f"NOTIFICATION: {task['title']} - {task['message']}")
+    # No longer removing tasks or updating next_run as each task runs only once
 
 def time_remaining(task):
     if not task["active"]:
@@ -79,41 +53,25 @@ def time_remaining(task):
     time_diff = task["next_run"] - datetime.now()
     return max(0, time_diff.total_seconds())
 
-
 def display_scheduled_tasks():
     if not scheduled_tasks:
         print("No scheduled notifications.")
         return
     print("\nScheduled Tasks:")
     for task in scheduled_tasks:
-        print(f"{task['title']}: {time_remaining(task)} seconds remaining")
-
-def send_notification(title, message):
-    system = platform.system()
-    if system == "Windows": 
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(0, message, title, 1)
-    elif system == "Darwin":
-        subprocess.run(["osascript", "-e", f'display notification "{message}" with title "{title}"'])
-    else:
-        print(f"Notification: {title} - {message}")
-
+        print(f"{task['title']}: {time_remaining(task):.1f} seconds remaining")
 
 def main():
+    # Start scheduler at startup
+    start_scheduler()
+    
     while True:
-        print("\n1. Send Notification")
-        print("2. Schedule Reminder")
-        print("3. Start Scheduler")
-        print("4. Stop Scheduler")
-        print("5. View Scheduled Tasks")
-        print("6. Exit")
+        print("\n1. Schedule Reminder")
+        print("2. View Scheduled Tasks")
+        print("3. Exit")
         choice = input("Choose an option: ")
 
         if choice == "1":
-            title = input("Title: ")
-            message = input("Message: ")
-            send_notification(title, message)
-        elif choice == "2":
             title = input("Title: ")
             message = input("Message: ")
             print("\n1. 1 hour\n2. 30 minutes\n3. 1 minute\n4. 10 seconds")
@@ -133,17 +91,13 @@ def main():
                 continue
 
             schedule_reminder(title, message, timeout)
-        elif choice == "3":
-            start_scheduler()
-        elif choice == "4":
-            stop_scheduler()
-        elif choice == "5":
+        elif choice == "2":
             display_scheduled_tasks()
-        elif choice == "6":
-            stop_scheduler()
+        elif choice == "3":
             print("Goodbye!")
             break
         else:
             print("Invalid choice.")
 
-main()
+if __name__ == "__main__":
+    main()
