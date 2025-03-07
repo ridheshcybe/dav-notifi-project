@@ -44,9 +44,8 @@ def should_run(task):
         return False
 
 def run_task(task):
-    if system == "Windows": 
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(0, message, title, 1)
+    import ctypes
+    ctypes.windll.user32.MessageBoxW(0, message, title, 1)
 
 def time_remaining(task):
     if not task["active"]:
