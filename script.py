@@ -45,7 +45,7 @@ def should_run(task):
 
 def run_task(task):
     import ctypes
-    ctypes.windll.user32.MessageBoxW(0, message, title, 1)
+    ctypes.windll.user32.MessageBoxW(0, task["message"], task["title"], 1)
 
 def time_remaining(task):
     if not task["active"]:
@@ -99,5 +99,4 @@ def main():
         else:
             print("Invalid choice.")
 
-if __name__ == "__main__":
-    main()
+main()
