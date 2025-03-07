@@ -44,8 +44,9 @@ def should_run(task):
         return False
 
 def run_task(task):
-    print(f"NOTIFICATION: {task['title']} - {task['message']}")
-    # No longer removing tasks or updating next_run as each task runs only once
+    if system == "Windows": 
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, message, title, 1)
 
 def time_remaining(task):
     if not task["active"]:
